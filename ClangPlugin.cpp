@@ -38,6 +38,7 @@ public:
     DefaultArgumentsAddMatchers(Finder);
     VirtualInheritanceAddMatchers(Finder);
     StaticallyConstructedObjectsAddMatchers(Finder);
+    ThreadLocalAddMatchers(Finder);
   }
 
   std::unique_ptr<ASTConsumer> makeASTConsumer() {

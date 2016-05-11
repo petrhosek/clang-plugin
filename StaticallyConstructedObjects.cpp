@@ -33,9 +33,12 @@ public:
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
     if (const VarDecl *D = Result.Nodes.getNodeAs<VarDecl>("decl")) {
-      unsigned ID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
+      unsigned ErrorID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
         DiagnosticIDs::Error, "[system-c++] Statically constructed objects are disallowed");
-      Diagnostics.Report(D->getLocStart(), ID);
+      unsigned NoteID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
+        DiagnosticIDs::Note, "[system-c++] If possible, use a constexpr constructor instead");
+      Diagnostics.Report(D->getLocStart(), ErrorID);
+      Diagnostics.Report(D->getLocStart(), NoteID);
     }
   }
 };
