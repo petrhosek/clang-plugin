@@ -48,7 +48,11 @@ void StaticallyConstructedObjectsAddMatchers(MatchFinder &Finder) {
   // Constructing objects which are stored statically is disallowed.
   Finder.addMatcher(
       varDecl(allOf(
+          // Match statically stored objects...
           hasStaticStorageDuration(),
-          hasDescendant(cxxConstructExpr()))).bind("decl"), &NoStaticallyConstructedObjects);
-
+          // ... which have C++ constructors...
+          hasDescendant(cxxConstructExpr(unless(
+          // ... that are not constexpr.
+              hasDeclaration(cxxConstructorDecl(isConstexpr()))
+          ))))).bind("decl"), &NoStaticallyConstructedObjects);
 }
