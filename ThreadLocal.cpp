@@ -19,8 +19,6 @@
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
-#include "Matchers.h"
-
 #include <string>
 
 using namespace clang;
