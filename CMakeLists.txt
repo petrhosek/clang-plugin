@@ -12,6 +12,10 @@ link_directories("${CMAKE_BINARY_DIR}/lib"
                  "${CMAKE_BINARY_DIR}/tools/clang/lib")
 
 set(plugin_sources
+  OverloadedOperator.cpp
+  DefaultArguments.cpp
+  VirtualInheritance.cpp
+  StaticallyConstructedObjects.cpp
   ClangPlugin.cpp)
 
 add_llvm_loadable_module(
