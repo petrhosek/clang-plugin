@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "ClangPluginCheck.h"
+#include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
-
-#include "Matchers.h"
 
 #include <string>
 
@@ -39,7 +39,7 @@ using namespace clang::ast_matchers;
 
 class NoDefaultParametersStmtCallback : public MatchFinder::MatchCallback {
 public:
-  virtual void run(const MatchFinder::MatchResult &Result) {
+  void run(const MatchFinder::MatchResult &Result) override {
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
     if (const CXXDefaultArgExpr *S = Result.Nodes.getNodeAs<CXXDefaultArgExpr>("stmt")) {
@@ -56,7 +56,7 @@ public:
 
 class NoDefaultParametersDeclCallback : public MatchFinder::MatchCallback {
 public:
-  virtual void run(const MatchFinder::MatchResult &Result) {
+  void run(const MatchFinder::MatchResult &Result) override {
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
     if (const ParmVarDecl *D = Result.Nodes.getNodeAs<ParmVarDecl>("decl")) {
@@ -70,11 +70,18 @@ public:
 NoDefaultParametersStmtCallback NoDefaultParametersStmt;
 NoDefaultParametersDeclCallback NoDefaultParametersDecl;
 
+class NoDefaultArgumentsCheck : public ClangPluginCheck {
+public:
+  void add(ast_matchers::MatchFinder &Finder) override {
+    // Calling a function which uses default arguments is disallowed.
+    Finder.addMatcher(cxxDefaultArgExpr().bind("stmt"), &NoDefaultParametersStmt);
+    // Declaring default parameters is disallowed.
+    Finder.addMatcher(parmVarDecl(hasDefaultArgument()).bind("decl"), &NoDefaultParametersDecl);
+  }
+};
+
 }  // namespace
 
-void DefaultArgumentsAddMatchers(MatchFinder &Finder) {
-  // Calling a function which uses default arguments is disallowed.
-  Finder.addMatcher(cxxDefaultArgExpr().bind("stmt"), &NoDefaultParametersStmt);
-  // Declaring default parameters is disallowed.
-  Finder.addMatcher(parmVarDecl(hasDefaultArgument()).bind("decl"), &NoDefaultParametersDecl);
-}
+static ClangPluginRegistry::Add<NoDefaultArgumentsCheck> X(
+    "no-default-arguments",
+    "Disallow C++ default arguments");

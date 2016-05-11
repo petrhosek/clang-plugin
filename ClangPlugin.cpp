@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "ClangPluginCheck.h"
+#include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
@@ -24,38 +26,45 @@
 #include "Matchers.h"
 
 #include <string>
+#include <vector>
 
 using namespace clang;
+
+template class llvm::Registry<ClangPluginCheck>;
+
+ClangPluginCheck::~ClangPluginCheck() {}
 
 namespace {
 
 using namespace clang::ast_matchers;
 
-class CheckRegistry {
+class ClangPluginFactory {
 public:
-  CheckRegistry() {
-    OverloadedOperatorAddMatchers(Finder);
-    DefaultArgumentsAddMatchers(Finder);
-    VirtualInheritanceAddMatchers(Finder);
-    StaticallyConstructedObjectsAddMatchers(Finder);
-    ThreadLocalAddMatchers(Finder);
-  }
+  typedef std::vector<std::unique_ptr<ClangPluginCheck>> CheckList;
 
   std::unique_ptr<ASTConsumer> makeASTConsumer() {
+    for (ClangPluginRegistry::iterator it = ClangPluginRegistry::begin(),
+                                       ie = ClangPluginRegistry::end();
+         it != ie; ++it) {
+      std::unique_ptr<ClangPluginCheck> Check = it->instantiate();
+      Check->add(Finder);
+      Checks.emplace_back(std::move(Check));
+    }
     return Finder.newASTConsumer();
   }
 
 private:
+  CheckList Checks;
   MatchFinder Finder;
 };
 
-CheckRegistry Registry;
+ClangPluginFactory Factory;
 
 class ClangPluginAction : public PluginASTAction {
 public:
   std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
       clang::CompilerInstance &Compiler, llvm::StringRef InFile) override {
-    return Registry.makeASTConsumer();
+    return Factory.makeASTConsumer();
   }
 
   bool ParseArgs(const clang::CompilerInstance &CI,
@@ -71,5 +80,5 @@ static FrontendPluginRegistry::Add<ClangPluginAction> X(
     "System C++ dialect of the C++ programming language");
 
 #ifdef LLVM_EXPORT_REGISTRY
-LLVM_EXPORT_REGISTRY(FrontendPluginRegistry)
+LLVM_EXPORT_REGISTRY(ClangPluginRegistry)
 #endif

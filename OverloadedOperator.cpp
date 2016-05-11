@@ -13,14 +13,15 @@
 // limitations under the License.
 
 
+#include "ClangPluginCheck.h"
+#include "ClangPluginRegistry.h"
+
 #include "clang/AST/Decl.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
-
-#include "Matchers.h"
 
 #include <string>
 
@@ -43,9 +44,9 @@ namespace {
 
 using namespace clang::ast_matchers;
 
-class NoOperatorOverloadingCallback : public MatchFinder::MatchCallback {
+class NoOverloadedOperatorCallback : public MatchFinder::MatchCallback {
 public:
-  virtual void run(const MatchFinder::MatchResult &Result) {
+  void run(const MatchFinder::MatchResult &Result) override {
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
     if (const CXXMethodDecl *D = Result.Nodes.getNodeAs<CXXMethodDecl>("decl")) {
@@ -59,10 +60,17 @@ public:
   }
 };
 
-NoOperatorOverloadingCallback NoOperatorOverloading;
+NoOverloadedOperatorCallback NoOverloadedOperator; 
+
+class NoOverloadedOperatorCheck : public ClangPluginCheck {
+public:
+  void add(ast_matchers::MatchFinder &Finder) override {
+    Finder.addMatcher(cxxMethodDecl(hasOverloadedOperator()).bind("decl"), &NoOverloadedOperator);
+  }
+};
 
 }  // namespace
 
-void OverloadedOperatorAddMatchers(MatchFinder &Finder) {
-  Finder.addMatcher(cxxMethodDecl(hasOverloadedOperator()).bind("decl"), &NoOperatorOverloading);
-}
+static ClangPluginRegistry::Add<NoOverloadedOperatorCheck> X(
+    "no-overloaded-operator",
+    "Disallow C++ operator overloading");
