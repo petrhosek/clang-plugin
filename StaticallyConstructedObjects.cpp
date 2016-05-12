@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "ClangPluginCheck.h"
+#include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
-
-#include "Matchers.h"
 
 #include <string>
 
@@ -29,7 +29,7 @@ using namespace clang::ast_matchers;
 
 class NoStaticallyConstructedObjectsCallback : public MatchFinder::MatchCallback {
 public:
-  virtual void run(const MatchFinder::MatchResult &Result) {
+  void run(const MatchFinder::MatchResult &Result) override {
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
     if (const VarDecl *D = Result.Nodes.getNodeAs<VarDecl>("decl")) {
@@ -45,17 +45,24 @@ public:
 
 NoStaticallyConstructedObjectsCallback NoStaticallyConstructedObjects;
 
+class NoStaticallyConstructedObjectsCheck : public ClangPluginCheck {
+public:
+  void add(ast_matchers::MatchFinder &Finder) override {
+    // Constructing objects which are stored statically is disallowed.
+    Finder.addMatcher(
+        varDecl(allOf(
+            // Match statically stored objects...
+            hasStaticStorageDuration(),
+            // ... which have C++ constructors...
+            hasDescendant(cxxConstructExpr(unless(
+            // ... that are not constexpr.
+                hasDeclaration(cxxConstructorDecl(isConstexpr()))
+            ))))).bind("decl"), &NoStaticallyConstructedObjects);
+  }
+};
+
 }  // namespace
 
-void StaticallyConstructedObjectsAddMatchers(MatchFinder &Finder) {
-  // Constructing objects which are stored statically is disallowed.
-  Finder.addMatcher(
-      varDecl(allOf(
-          // Match statically stored objects...
-          hasStaticStorageDuration(),
-          // ... which have C++ constructors...
-          hasDescendant(cxxConstructExpr(unless(
-          // ... that are not constexpr.
-              hasDeclaration(cxxConstructorDecl(isConstexpr()))
-          ))))).bind("decl"), &NoStaticallyConstructedObjects);
-}
+static ClangPluginRegistry::Add<NoStaticallyConstructedObjectsCheck> X(
+    "no-statically-constructed-objects",
+    "Disallow statically constructed C++ objects");

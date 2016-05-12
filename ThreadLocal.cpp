@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "ClangPluginCheck.h"
+#include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
-
-#include "Matchers.h"
 
 #include <string>
 
@@ -29,7 +29,7 @@ using namespace clang::ast_matchers;
 
 class NoThreadLocalDeclCallback : public MatchFinder::MatchCallback {
 public:
-  virtual void run(const MatchFinder::MatchResult &Result) {
+  void run(const MatchFinder::MatchResult &Result) override {
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
     if (const VarDecl *D = Result.Nodes.getNodeAs<VarDecl>("decl")) {
@@ -42,9 +42,16 @@ public:
 
 NoThreadLocalDeclCallback NoThreadLocalDecl;
 
+class NoThreadLocalDeclCheck : public ClangPluginCheck {
+public:
+  void add(ast_matchers::MatchFinder &Finder) override {
+    // Using thread-local storage is disallowed.
+    Finder.addMatcher(varDecl(hasThreadStorageDuration()).bind("decl"), &NoThreadLocalDecl);
+  }
+};
+
 }  // namespace
 
-void ThreadLocalAddMatchers(MatchFinder &Finder) {
-  // Using thread-local storage is disallowed.
-  Finder.addMatcher(varDecl(hasThreadStorageDuration()).bind("decl"), &NoThreadLocalDecl);
-}
+static ClangPluginRegistry::Add<NoThreadLocalDeclCheck> X(
+    "no-thread-local-decl",
+    "Disallow C++ thread_local storage");

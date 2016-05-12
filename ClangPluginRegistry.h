@@ -12,17 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef LLVM_CLANG_PLUGIN_CLANGPLUGINREGISTRY_H
+#define LLVM_CLANG_PLUGIN_CLANGPLUGINREGISTRY_H
 
-#include "clang/AST/Decl.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
-#include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "ClangPluginCheck.h"
+#include "llvm/Support/Registry.h"
 
-using namespace clang;
-using namespace clang::ast_matchers;
+// Instantiated in ClangPlugin.cpp.
+extern template class llvm::Registry<clang::ClangPluginCheck>;
 
-void OverloadedOperatorAddMatchers(MatchFinder &Finder);
-void DefaultArgumentsAddMatchers(MatchFinder &Finder);
-void VirtualInheritanceAddMatchers(MatchFinder &Finder);
-void StaticallyConstructedObjectsAddMatchers(MatchFinder &Finder);
-void ThreadLocalAddMatchers(MatchFinder &Finder);
-void MultipleInheritanceAddMatchers(MatchFinder &Finder);
+namespace clang {
+
+/// The frontend plugin registry.
+typedef llvm::Registry<ClangPluginCheck> ClangPluginRegistry;
+
+} // end namespace clang
+
+#endif

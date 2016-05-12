@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "ClangPluginCheck.h"
+#include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
-
-#include "Matchers.h"
 
 #include <string>
 
@@ -91,10 +91,8 @@ public:
 
     if (const CXXRecordDecl *D = Result.Nodes.getNodeAs<CXXRecordDecl>("decl")) {
       unsigned ID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Error, "[system-c++] Multiple Inheritance of concrete classes is disallowed");
+        DiagnosticIDs::Error, "[system-c++] Inheriting multiple classes which aren't pure virtual is disallowed");
       Diagnostics.Report(D->getLocStart(), ID);
-      // TODO(smklein): Add note explaining "interface" vs "concrete", how many
-      // allowed.
     }
   }
 };
@@ -103,12 +101,16 @@ public:
 
 LimitMultipleInheritanceDeclCallback LimitMultipleInheritanceDecl;
 
+class MultipleInheritanceCheck : public ClangPluginCheck {
+public:
+  void add(ast_matchers::MatchFinder &Finder) override {
+    // Match declarations which inherit multiple concrete base classes.
+    Finder.addMatcher(cxxRecordDecl(hasMultipleConcreteBaseClasses()).bind("decl"), &LimitMultipleInheritanceDecl);
+  }
+};
+
 }  // namespace
 
-void MultipleInheritanceAddMatchers(MatchFinder &Finder) {
-  // Matches classes that inherit from a pure interface, at any point...
-  //Finder.addMatcher(cxxRecordDecl(isDerivedFrom(cxxRecordDecl(hasOnlyPureFunctions()))).bind("decl"), &LimitMultipleInheritanceDecl);
-
-  // Match declarations which inherit multiple concrete base classes.
-  Finder.addMatcher(cxxRecordDecl(hasMultipleConcreteBaseClasses()).bind("decl"), &LimitMultipleInheritanceDecl);
-}
+static ClangPluginRegistry::Add<MultipleInheritanceCheck> X(
+    "limit-multiple-inheritance",
+    "Limit usage of Multiple Inheritance");
