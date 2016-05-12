@@ -25,4 +25,4 @@ void DefaultArgumentsAddMatchers(MatchFinder &Finder);
 void VirtualInheritanceAddMatchers(MatchFinder &Finder);
 void StaticallyConstructedObjectsAddMatchers(MatchFinder &Finder);
 void ThreadLocalAddMatchers(MatchFinder &Finder);
-
+void MultipleInheritanceAddMatchers(MatchFinder &Finder);

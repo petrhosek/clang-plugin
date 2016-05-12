@@ -17,6 +17,7 @@ set(plugin_sources
   VirtualInheritance.cpp
   StaticallyConstructedObjects.cpp
   ThreadLocal.cpp
+  MultipleInheritance.cpp
   ClangPlugin.cpp)
 
 add_llvm_loadable_module(
