@@ -18,6 +18,7 @@ set(plugin_sources
   StaticallyConstructedObjects.cpp
   ThreadLocal.cpp
   MultipleInheritance.cpp
+  TrailingReturn.cpp
   ClangPlugin.cpp)
 
 add_llvm_loadable_module(
