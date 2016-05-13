@@ -23,11 +23,37 @@
 
 using namespace clang;
 
+namespace {
+
+// Contains the identity of each named CXXRecord as an interface.  This is used
+// to memoize lookup speeds and improve performance from O(N^2) to O(N), where N
+// is the number of classes.
+llvm::StringMap<bool> *InterfaceMap;
+
+// Adds a node (by name) to the interface map, if it was not present in the map
+// previously.
+void addNodeToInterfaceMap(const CXXRecordDecl *Node, bool isInterface) {
+  StringRef Name = Node->getIdentifier()->getName();
+  InterfaceMap->insert(std::make_pair(Name, isInterface));
+}
+
+// Returns "true" if the boolean "isInterface" has been set to the
+// interface status of the current Node. Return "false" if the
+// interface status for the current node is not yet known.
+bool getInterfaceStatus(const CXXRecordDecl *Node, bool *isInterface) {
+  StringRef Name = Node->getIdentifier()->getName();
+  if (InterfaceMap->count(Name)) {
+    *isInterface = InterfaceMap->lookup(Name);
+    return true;
+  }
+  return false;
+}
+
+}  // namespace
+
 namespace clang {
 namespace ast_matchers {
 
-// Performance is not ideal.
-// TODO(smklein): Memoization.
 bool isCurrentClassInterface(const CXXRecordDecl *Node) {
   // Interfaces should have no fields.
   if (!Node->field_empty()) {
@@ -45,18 +71,25 @@ bool isCurrentClassInterface(const CXXRecordDecl *Node) {
 }
 
 bool isInterface(const CXXRecordDecl *Node) {
+  // Short circuit the lookup if we have analyzed this record before.
+  bool previousIsInterfaceResult;
+  if (getInterfaceStatus(Node, &previousIsInterfaceResult)) {
+    return previousIsInterfaceResult;
+  }
+
+  // To be an interface, all base classes must be interfaces as well.
   for (const auto &I : Node->bases()) {
     const RecordType *Ty = I.getType()->getAs<RecordType>();
-    // Conservatively return false (not an interface) to prompt an error.
-    if (!Ty)
+    assert(Ty && "RecordType of base class is unknown");
+    CXXRecordDecl *Base = cast<CXXRecordDecl>(Ty->getDecl()->getDefinition());
+    if (!isInterface(Base)) {
+      addNodeToInterfaceMap(Node, false);
       return false;
-    CXXRecordDecl *Base = cast_or_null<CXXRecordDecl>(Ty->getDecl()->getDefinition());
-    if (!Base)
-      return false;
-    if (!isInterface(Base))
-      return false;
+    }
   }
-  return isCurrentClassInterface(Node);
+  bool currentClassIsInterface = isCurrentClassInterface(Node);
+  addNodeToInterfaceMap(Node, currentClassIsInterface);
+  return currentClassIsInterface;
 }
 
 AST_MATCHER(CXXRecordDecl, hasMultipleConcreteBaseClasses) {
@@ -66,11 +99,8 @@ AST_MATCHER(CXXRecordDecl, hasMultipleConcreteBaseClasses) {
   int numConcrete = 0;
   for (const auto &I : Node.bases()) {
     const RecordType *Ty = I.getType()->getAs<RecordType>();
-    if (!Ty)
-      return false;
-    CXXRecordDecl *Base = cast_or_null<CXXRecordDecl>(Ty->getDecl()->getDefinition());
-    if (!Base)
-      return false;
+    assert(Ty && "RecordType of base class is unknown");
+    CXXRecordDecl *Base = cast<CXXRecordDecl>(Ty->getDecl()->getDefinition());
     if (!isInterface(Base))
       numConcrete++;
   }
@@ -86,7 +116,7 @@ using namespace clang::ast_matchers;
 
 class LimitMultipleInheritanceDeclCallback : public MatchFinder::MatchCallback {
 public:
-  virtual void run(const MatchFinder::MatchResult &Result) {
+  virtual void run(const MatchFinder::MatchResult &Result) override {
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
     if (const CXXRecordDecl *D = Result.Nodes.getNodeAs<CXXRecordDecl>("decl")) {
@@ -95,9 +125,16 @@ public:
       Diagnostics.Report(D->getLocStart(), ID);
     }
   }
+
+  void onStartOfTranslationUnit() override {
+    InterfaceMap = new llvm::StringMap<bool>;
+  }
+  void onEndOfTranslationUnit() override {
+    delete InterfaceMap;
+  }
 };
 
-// TODO(smklein): One for decl, one for stmt.
+// TODO(smklein): Add a matcher for statements.
 
 LimitMultipleInheritanceDeclCallback LimitMultipleInheritanceDecl;
 
