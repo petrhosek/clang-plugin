@@ -9,16 +9,18 @@
 // RUN:   %clang_plugin -Xclang -add-plugin -Xclang system-c++ %s 2>&1 \
 // RUN:   | FileCheck %s
 
-class A {
-public:
-// CHECK: [[@LINE+1]]:3: error: [system-c++] Operator overloading is disallowed 'int (int)'
-  int operator+(int);
-};
+int add_one(const int arg){
+  return arg;
+}
 
-class B {
-public:
-// CHECK-NOT: [[@LINE+1]]:3: error: [system-c++] Operator overloading is disallowed 'int (int)'
-  B& operator=(B other);
-// CHECK-NOT: [[@LINE+1]]:3: error: [system-c++] Operator overloading is disallowed 'int (int)'
-  B& operator=(B&& other);
-};
+auto get_add_one() -> int(*)(const int) {
+// CHECK: [[@LINE-1]]:1: error: [system-c++] Trailing returns are disallowed
+// CHECK-NEXT: auto get_add_one() -> int(*)(const int) {
+    return add_one;
+}
+
+int main(void) {
+  get_add_one()(5);
+
+  return 0;
+}

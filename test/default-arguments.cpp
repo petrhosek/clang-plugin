@@ -9,16 +9,21 @@
 // RUN:   %clang_plugin -Xclang -add-plugin -Xclang system-c++ %s 2>&1 \
 // RUN:   | FileCheck %s
 
-class A {
-public:
-// CHECK: [[@LINE+1]]:3: error: [system-c++] Operator overloading is disallowed 'int (int)'
-  int operator+(int);
-};
 
-class B {
-public:
-// CHECK-NOT: [[@LINE+1]]:3: error: [system-c++] Operator overloading is disallowed 'int (int)'
-  B& operator=(B other);
-// CHECK-NOT: [[@LINE+1]]:3: error: [system-c++] Operator overloading is disallowed 'int (int)'
-  B& operator=(B&& other);
-};
+// CHECK: [[@LINE+1]]:9: error: [system-c++] Declaring functions which use default arguments is disallowed
+int foo(int value=5) {
+  return value;
+}
+
+int bar(int value) {
+  return value;
+}
+
+int main(void) {
+// CHECK: [[@LINE+1]]:3: error: [system-c++] Calling functions which use default arguments is disallowed
+  foo();
+// CHECK: note: [system-c++] The default parameter was declared here:
+// CHECK-NEXT: int foo(int value=5) {
+  foo(0);
+  bar(0);
+}
