@@ -16,8 +16,8 @@
 #include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
@@ -60,8 +60,9 @@ ClangPluginFactory Factory;
 
 class ClangPluginAction : public PluginASTAction {
 public:
-  std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
-      clang::CompilerInstance &Compiler, llvm::StringRef InFile) override {
+  std::unique_ptr<clang::ASTConsumer>
+  CreateASTConsumer(clang::CompilerInstance &Compiler,
+                    llvm::StringRef InFile) override {
     return Factory.makeASTConsumer();
   }
 
@@ -70,12 +71,10 @@ public:
     return true;
   }
 };
-
 }
 
-static FrontendPluginRegistry::Add<ClangPluginAction> X(
-    "system-c++",
-    "System C++ dialect of the C++ programming language");
+static FrontendPluginRegistry::Add<ClangPluginAction>
+    X("system-c++", "System C++ dialect of the C++ programming language");
 
 #ifdef LLVM_EXPORT_REGISTRY
 LLVM_EXPORT_REGISTRY(ClangPluginRegistry)

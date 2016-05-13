@@ -9,14 +9,12 @@
 // RUN:   %clang_plugin -Xclang -add-plugin -Xclang system-c++ %s 2>&1 \
 // RUN:   | FileCheck %s
 
-int add_one(const int arg){
-  return arg;
-}
+int add_one(const int arg) { return arg; }
 
-auto get_add_one() -> int(*)(const int) {
-// CHECK: [[@LINE-1]]:1: error: [system-c++] Trailing returns are disallowed
-// CHECK-NEXT: auto get_add_one() -> int(*)(const int) {
-    return add_one;
+auto get_add_one() -> int (*)(const int) {
+  // CHECK: [[@LINE-1]]:1: error: [system-c++] Trailing returns are disallowed
+  // CHECK-NEXT: auto get_add_one() -> int (*)(const int) {
+  return add_one;
 }
 
 int main(void) {

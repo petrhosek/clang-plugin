@@ -16,8 +16,8 @@
 #include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
 
 #include <string>
 
@@ -27,16 +27,19 @@ namespace {
 
 using namespace clang::ast_matchers;
 
-class NoStaticallyConstructedObjectsCallback : public MatchFinder::MatchCallback {
+class NoStaticallyConstructedObjectsCallback
+    : public MatchFinder::MatchCallback {
 public:
   void run(const MatchFinder::MatchResult &Result) override {
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
     if (const VarDecl *D = Result.Nodes.getNodeAs<VarDecl>("decl")) {
       unsigned ErrorID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Error, "[system-c++] Statically constructed objects are disallowed");
+          DiagnosticIDs::Error,
+          "[system-c++] Statically constructed objects are disallowed");
       unsigned NoteID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Note, "[system-c++] If possible, use a constexpr constructor instead");
+          DiagnosticIDs::Note,
+          "[system-c++] If possible, use a constexpr constructor instead");
       Diagnostics.Report(D->getLocStart(), ErrorID);
       Diagnostics.Report(D->getLocStart(), NoteID);
     }
@@ -51,18 +54,19 @@ public:
     // Constructing objects which are stored statically is disallowed.
     Finder.addMatcher(
         varDecl(allOf(
-            // Match statically stored objects...
-            hasStaticStorageDuration(),
-            // ... which have C++ constructors...
-            hasDescendant(cxxConstructExpr(unless(
-            // ... that are not constexpr.
-                hasDeclaration(cxxConstructorDecl(isConstexpr()))
-            ))))).bind("decl"), &NoStaticallyConstructedObjects);
+                    // Match statically stored objects...
+                    hasStaticStorageDuration(),
+                    // ... which have C++ constructors...
+                    hasDescendant(cxxConstructExpr(unless(
+                        // ... that are not constexpr.
+                        hasDeclaration(cxxConstructorDecl(isConstexpr())))))))
+            .bind("decl"),
+        &NoStaticallyConstructedObjects);
   }
 };
 
-}  // namespace
+} // namespace
 
-static ClangPluginRegistry::Add<NoStaticallyConstructedObjectsCheck> X(
-    "no-statically-constructed-objects",
-    "Disallow statically constructed C++ objects");
+static ClangPluginRegistry::Add<NoStaticallyConstructedObjectsCheck>
+    X("no-statically-constructed-objects",
+      "Disallow statically constructed C++ objects");

@@ -16,8 +16,8 @@
 #include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
 
 #include <string>
 
@@ -29,7 +29,6 @@ namespace ast_matchers {
 AST_MATCHER(CXXRecordDecl, hasVirtualBaseClass) {
   return Node.hasDefinition() && (Node.getNumVBases() != 0);
 }
-
 }
 }
 
@@ -42,9 +41,11 @@ public:
   void run(const MatchFinder::MatchResult &Result) override {
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
-    if (const CXXRecordDecl *D = Result.Nodes.getNodeAs<CXXRecordDecl>("decl")) {
+    if (const CXXRecordDecl *D =
+            Result.Nodes.getNodeAs<CXXRecordDecl>("decl")) {
       unsigned ID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Error, "[system-c++] Virtual inheritance is disallowed");
+          DiagnosticIDs::Error,
+          "[system-c++] Virtual inheritance is disallowed");
       Diagnostics.Report(D->getLocStart(), ID);
     }
   }
@@ -55,9 +56,11 @@ public:
   void run(const MatchFinder::MatchResult &Result) override {
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
-    if (const CXXConstructExpr *S = Result.Nodes.getNodeAs<CXXConstructExpr>("stmt")) {
+    if (const CXXConstructExpr *S =
+            Result.Nodes.getNodeAs<CXXConstructExpr>("stmt")) {
       unsigned ID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Error, "[system-c++] Constructing a class which inherits a virtual base class is disallowed");
+          DiagnosticIDs::Error, "[system-c++] Constructing a class which "
+                                "inherits a virtual base class is disallowed");
       Diagnostics.Report(S->getLocStart(), ID);
     }
   }
@@ -70,7 +73,8 @@ class NoVirtualInheritanceCheck : public ClangPluginCheck {
 public:
   void add(ast_matchers::MatchFinder &Finder) override {
     // Defining classes using virtual inheritance is disallowed.
-    Finder.addMatcher(cxxRecordDecl(hasVirtualBaseClass()).bind("decl"), &NoVirtualInheritanceDecl);
+    Finder.addMatcher(cxxRecordDecl(hasVirtualBaseClass()).bind("decl"),
+                      &NoVirtualInheritanceDecl);
     // Calling constructors of classes using virtual inheritance is disallowed.
     // To clarify, this matcher finds, in order:
     //  1) Calls to Constructors,
@@ -78,14 +82,14 @@ public:
     //  3) The classes those constructors belong to,
     //  4) And matches the classes which have virtual base classes.
     Finder.addMatcher(
-        cxxConstructExpr(hasDeclaration(
-          cxxConstructorDecl(ofClass(
-            cxxRecordDecl(hasVirtualBaseClass()))))).bind("stmt"), &NoVirtualInheritanceStmt);
+        cxxConstructExpr(hasDeclaration(cxxConstructorDecl(
+                             ofClass(cxxRecordDecl(hasVirtualBaseClass())))))
+            .bind("stmt"),
+        &NoVirtualInheritanceStmt);
   }
 };
 
-}  // namespace
+} // namespace
 
-static ClangPluginRegistry::Add<NoVirtualInheritanceCheck> X(
-    "no-virtual-inheritance",
-    "Disallow C++ virtual inheritance");
+static ClangPluginRegistry::Add<NoVirtualInheritanceCheck>
+    X("no-virtual-inheritance", "Disallow C++ virtual inheritance");

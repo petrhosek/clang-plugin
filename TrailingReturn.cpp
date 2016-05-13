@@ -16,8 +16,8 @@
 #include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
 
 #include <string>
 
@@ -31,7 +31,6 @@ AST_MATCHER(FunctionDecl, hasTrailingReturn) {
   const FunctionProtoType *F = cast<FunctionProtoType>(T);
   return F->hasTrailingReturn();
 }
-
 }
 }
 
@@ -46,7 +45,7 @@ public:
 
     if (const Decl *D = Result.Nodes.getNodeAs<Decl>("decl")) {
       unsigned ID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Error, "[system-c++] Trailing returns are disallowed");
+          DiagnosticIDs::Error, "[system-c++] Trailing returns are disallowed");
 
       Diagnostics.Report(D->getLocStart(), ID);
     }
@@ -59,12 +58,12 @@ class NoTrailingReturnCheck : public ClangPluginCheck {
 public:
   void add(ast_matchers::MatchFinder &Finder) override {
     // Functions which have trailing returns are disallowed.
-    Finder.addMatcher(functionDecl(hasTrailingReturn()).bind("decl"), &NoTrailingReturn);
+    Finder.addMatcher(functionDecl(hasTrailingReturn()).bind("decl"),
+                      &NoTrailingReturn);
   }
 };
 
-}  // namespace
+} // namespace
 
-static ClangPluginRegistry::Add<NoTrailingReturnCheck> X(
-    "no-trailing-return",
-    "Disallow C++ trailing return");
+static ClangPluginRegistry::Add<NoTrailingReturnCheck>
+    X("no-trailing-return", "Disallow C++ trailing return");

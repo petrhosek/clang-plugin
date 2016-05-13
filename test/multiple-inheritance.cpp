@@ -10,49 +10,43 @@
 // RUN:   | FileCheck %s
 
 class Base_A {
-  public:
-   virtual int foo() {
-    return 0;
-   }
+public:
+  virtual int foo() { return 0; }
 };
 
 class Base_B {
-  public:
-   virtual int bar() {
-    return 0;
-   }
+public:
+  virtual int bar() { return 0; }
 };
 
 class Base_A_child : public Base_A {
-  public:
-   virtual int baz() {
-    return 0;
-   }
+public:
+  virtual int baz() { return 0; }
 };
 
 class Interface_A {
-  public:
-   virtual int foo() = 0;
+public:
+  virtual int foo() = 0;
 };
 
 class Interface_B {
-  public:
-   virtual int bar() = 0;
+public:
+  virtual int bar() = 0;
 };
 
 class Interface_C {
-  public:
-   virtual int blat() = 0;
+public:
+  virtual int blat() = 0;
 };
 
 class Interface_A_with_member {
-  public:
-   virtual int foo() = 0;
-   int val = 0;
+public:
+  virtual int foo() = 0;
+  int val = 0;
 };
 
 class Interface_with_A_Parent : public Base_A {
- public:
+public:
   virtual int baz() = 0;
 };
 
@@ -68,8 +62,8 @@ class Bad_Child2 : public Base_A, Interface_A_with_member {
 };
 
 // CHECK: [[@LINE+2]]:1: error: [system-c++] Inheriting multiple classes which aren't pure virtual is disallowed
-// CHECK-NEXT: class Bad_Child3: public Interface_with_A_Parent, Base_B {
-class Bad_Child3: public Interface_with_A_Parent, Base_B {
+// CHECK-NEXT: class Bad_Child3 : public Interface_with_A_Parent, Base_B {
+class Bad_Child3 : public Interface_with_A_Parent, Base_B {
   virtual int baz() override { return 0; }
 };
 
@@ -91,7 +85,6 @@ class Good_Child3 : public Base_A_child, Interface_C, Interface_B {
   virtual int bar() override { return 0; }
   virtual int blat() override { return 0; }
 };
-
 
 int main(void) {
   Bad_Child1 a;

@@ -16,8 +16,8 @@
 #include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
 
 #include <string>
 
@@ -34,7 +34,8 @@ public:
 
     if (const VarDecl *D = Result.Nodes.getNodeAs<VarDecl>("decl")) {
       unsigned ID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Error, "[system-c++] Thread local storage is disallowed");
+          DiagnosticIDs::Error,
+          "[system-c++] Thread local storage is disallowed");
       Diagnostics.Report(D->getLocStart(), ID);
     }
   }
@@ -46,12 +47,12 @@ class NoThreadLocalDeclCheck : public ClangPluginCheck {
 public:
   void add(ast_matchers::MatchFinder &Finder) override {
     // Using thread-local storage is disallowed.
-    Finder.addMatcher(varDecl(hasThreadStorageDuration()).bind("decl"), &NoThreadLocalDecl);
+    Finder.addMatcher(varDecl(hasThreadStorageDuration()).bind("decl"),
+                      &NoThreadLocalDecl);
   }
 };
 
-}  // namespace
+} // namespace
 
-static ClangPluginRegistry::Add<NoThreadLocalDeclCheck> X(
-    "no-thread-local-decl",
-    "Disallow C++ thread_local storage");
+static ClangPluginRegistry::Add<NoThreadLocalDeclCheck>
+    X("no-thread-local-decl", "Disallow C++ thread_local storage");

@@ -16,7 +16,8 @@ mkdir -p ${OUT_DIR} && cd ${OUT_DIR}
 cmake -G Ninja -DCMAKE_BUILD_TYPE="Debug" -DCMAKE_C_COMPILER="${HOME}/goma/clang" -DCMAKE_CXX_COMPILER="${HOME}/goma/clang++" -DBUILD_SHARED_LIBS=ON ${LLVM_DIR}
 
 ninja -j40
-ninja -j40 libclangPlugin
+#ninja -j40 libclangPlugin
+
+ninja check-clang-plugin
 
 cd ${PWD}
-

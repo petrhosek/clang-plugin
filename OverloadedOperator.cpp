@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "ClangPluginCheck.h"
 #include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
@@ -36,7 +35,6 @@ AST_MATCHER(CXXMethodDecl, hasOverloadedOperator) {
   }
   return Node.isOverloadedOperator();
 }
-
 }
 }
 
@@ -49,28 +47,30 @@ public:
   void run(const MatchFinder::MatchResult &Result) override {
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
-    if (const CXXMethodDecl *D = Result.Nodes.getNodeAs<CXXMethodDecl>("decl")) {
+    if (const CXXMethodDecl *D =
+            Result.Nodes.getNodeAs<CXXMethodDecl>("decl")) {
       QualType T = D->getType();
       SourceLocation Loc = D->getLocStart();
 
       unsigned ID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Error, "[system-c++] Operator overloading is disallowed %0");
+          DiagnosticIDs::Error,
+          "[system-c++] Operator overloading is disallowed %0");
       Diagnostics.Report(Loc, ID) << T;
     }
   }
 };
 
-NoOverloadedOperatorCallback NoOverloadedOperator; 
+NoOverloadedOperatorCallback NoOverloadedOperator;
 
 class NoOverloadedOperatorCheck : public ClangPluginCheck {
 public:
   void add(ast_matchers::MatchFinder &Finder) override {
-    Finder.addMatcher(cxxMethodDecl(hasOverloadedOperator()).bind("decl"), &NoOverloadedOperator);
+    Finder.addMatcher(cxxMethodDecl(hasOverloadedOperator()).bind("decl"),
+                      &NoOverloadedOperator);
   }
 };
 
-}  // namespace
+} // namespace
 
-static ClangPluginRegistry::Add<NoOverloadedOperatorCheck> X(
-    "no-overloaded-operator",
-    "Disallow C++ operator overloading");
+static ClangPluginRegistry::Add<NoOverloadedOperatorCheck>
+    X("no-overloaded-operator", "Disallow C++ operator overloading");

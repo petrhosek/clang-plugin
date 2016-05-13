@@ -13,6 +13,7 @@ class AdderClass {
 public:
   AdderClass(int value1, int value2) : val(value1 + value2) {}
   constexpr AdderClass(int value) : val(value) {}
+
 private:
   int val;
 };
@@ -23,9 +24,7 @@ struct mystruct {
 
 struct mystruct_with_method {
   int a;
-  void b() {
-    a++;
-  }
+  void b() { a++; }
 };
 
 struct static_mystruct_container {
@@ -36,18 +35,18 @@ struct static_mystruct_container {
 
 int main(void) {
   static AdderClass a(1, 2);
-// CHECK: [[@LINE-1]]:3: error: [system-c++] Statically constructed objects are disallowed
-// CHECK-NEXT:  static AdderClass a(1, 2);
+  // CHECK: [[@LINE-1]]:3: error: [system-c++] Statically constructed objects are disallowed
+  // CHECK-NEXT:  static AdderClass a(1, 2);
 
   // Allowed (constexpr ctor)
   static AdderClass b(0);
 
   static struct mystruct c;
-// CHECK: [[@LINE-1]]:3: error: [system-c++] Statically constructed objects are disallowed
-// CHECK-NEXT:  static struct mystruct c;
+  // CHECK: [[@LINE-1]]:3: error: [system-c++] Statically constructed objects are disallowed
+  // CHECK-NEXT:  static struct mystruct c;
   static struct mystruct_with_method d;
-// CHECK: [[@LINE-1]]:3: error: [system-c++] Statically constructed objects are disallowed
-// CHECK-NEXT:  static struct mystruct_with_method d;
+  // CHECK: [[@LINE-1]]:3: error: [system-c++] Statically constructed objects are disallowed
+  // CHECK-NEXT:  static struct mystruct_with_method d;
 
   static int e;
   struct static_mystruct_container f;

@@ -16,8 +16,8 @@
 #include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
 
 #include <string>
 
@@ -49,7 +49,7 @@ bool getInterfaceStatus(const CXXRecordDecl *Node, bool *isInterface) {
   return false;
 }
 
-}  // namespace
+} // namespace
 
 namespace clang {
 namespace ast_matchers {
@@ -106,7 +106,6 @@ AST_MATCHER(CXXRecordDecl, hasMultipleConcreteBaseClasses) {
   }
   return numConcrete > 1;
 }
-
 }
 }
 
@@ -119,9 +118,11 @@ public:
   virtual void run(const MatchFinder::MatchResult &Result) override {
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
-    if (const CXXRecordDecl *D = Result.Nodes.getNodeAs<CXXRecordDecl>("decl")) {
+    if (const CXXRecordDecl *D =
+            Result.Nodes.getNodeAs<CXXRecordDecl>("decl")) {
       unsigned ID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Error, "[system-c++] Inheriting multiple classes which aren't pure virtual is disallowed");
+          DiagnosticIDs::Error, "[system-c++] Inheriting multiple classes "
+                                "which aren't pure virtual is disallowed");
       Diagnostics.Report(D->getLocStart(), ID);
     }
   }
@@ -129,9 +130,7 @@ public:
   void onStartOfTranslationUnit() override {
     InterfaceMap = new llvm::StringMap<bool>;
   }
-  void onEndOfTranslationUnit() override {
-    delete InterfaceMap;
-  }
+  void onEndOfTranslationUnit() override { delete InterfaceMap; }
 };
 
 // TODO(smklein): Add a matcher for statements.
@@ -142,12 +141,13 @@ class MultipleInheritanceCheck : public ClangPluginCheck {
 public:
   void add(ast_matchers::MatchFinder &Finder) override {
     // Match declarations which inherit multiple concrete base classes.
-    Finder.addMatcher(cxxRecordDecl(hasMultipleConcreteBaseClasses()).bind("decl"), &LimitMultipleInheritanceDecl);
+    Finder.addMatcher(
+        cxxRecordDecl(hasMultipleConcreteBaseClasses()).bind("decl"),
+        &LimitMultipleInheritanceDecl);
   }
 };
 
-}  // namespace
+} // namespace
 
-static ClangPluginRegistry::Add<MultipleInheritanceCheck> X(
-    "limit-multiple-inheritance",
-    "Limit usage of Multiple Inheritance");
+static ClangPluginRegistry::Add<MultipleInheritanceCheck>
+    X("limit-multiple-inheritance", "Limit usage of Multiple Inheritance");

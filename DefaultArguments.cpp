@@ -16,8 +16,8 @@
 #include "ClangPluginRegistry.h"
 
 #include "clang/AST/Decl.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
 
 #include <string>
 
@@ -26,10 +26,7 @@ using namespace clang;
 namespace clang {
 namespace ast_matchers {
 
-AST_MATCHER(ParmVarDecl, hasDefaultArgument) {
-    return Node.hasDefaultArg();
-}
-
+AST_MATCHER(ParmVarDecl, hasDefaultArgument) { return Node.hasDefaultArg(); }
 }
 }
 
@@ -42,11 +39,14 @@ public:
   void run(const MatchFinder::MatchResult &Result) override {
     DiagnosticsEngine &Diagnostics = Result.Context->getDiagnostics();
 
-    if (const CXXDefaultArgExpr *S = Result.Nodes.getNodeAs<CXXDefaultArgExpr>("stmt")) {
+    if (const CXXDefaultArgExpr *S =
+            Result.Nodes.getNodeAs<CXXDefaultArgExpr>("stmt")) {
       unsigned ErrorID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Error, "[system-c++] Calling functions which use default arguments is disallowed");
+          DiagnosticIDs::Error, "[system-c++] Calling functions which use "
+                                "default arguments is disallowed");
       unsigned NoteID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Note, "[system-c++] The default parameter was declared here:");
+          DiagnosticIDs::Note,
+          "[system-c++] The default parameter was declared here:");
 
       Diagnostics.Report(S->getUsedLocation(), ErrorID);
       Diagnostics.Report(S->getParam()->getLocStart(), NoteID);
@@ -61,7 +61,8 @@ public:
 
     if (const ParmVarDecl *D = Result.Nodes.getNodeAs<ParmVarDecl>("decl")) {
       unsigned ID = Diagnostics.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Error, "[system-c++] Declaring functions which use default arguments is disallowed");
+          DiagnosticIDs::Error, "[system-c++] Declaring functions which use "
+                                "default arguments is disallowed");
       Diagnostics.Report(D->getLocStart(), ID);
     }
   }
@@ -74,14 +75,15 @@ class NoDefaultArgumentsCheck : public ClangPluginCheck {
 public:
   void add(ast_matchers::MatchFinder &Finder) override {
     // Calling a function which uses default arguments is disallowed.
-    Finder.addMatcher(cxxDefaultArgExpr().bind("stmt"), &NoDefaultParametersStmt);
+    Finder.addMatcher(cxxDefaultArgExpr().bind("stmt"),
+                      &NoDefaultParametersStmt);
     // Declaring default parameters is disallowed.
-    Finder.addMatcher(parmVarDecl(hasDefaultArgument()).bind("decl"), &NoDefaultParametersDecl);
+    Finder.addMatcher(parmVarDecl(hasDefaultArgument()).bind("decl"),
+                      &NoDefaultParametersDecl);
   }
 };
 
-}  // namespace
+} // namespace
 
-static ClangPluginRegistry::Add<NoDefaultArgumentsCheck> X(
-    "no-default-arguments",
-    "Disallow C++ default arguments");
+static ClangPluginRegistry::Add<NoDefaultArgumentsCheck>
+    X("no-default-arguments", "Disallow C++ default arguments");

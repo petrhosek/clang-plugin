@@ -9,21 +9,16 @@
 // RUN:   %clang_plugin -Xclang -add-plugin -Xclang system-c++ %s 2>&1 \
 // RUN:   | FileCheck %s
 
-
 // CHECK: [[@LINE+1]]:9: error: [system-c++] Declaring functions which use default arguments is disallowed
-int foo(int value=5) {
-  return value;
-}
+int foo(int value = 5) { return value; }
 
-int bar(int value) {
-  return value;
-}
+int bar(int value) { return value; }
 
 int main(void) {
-// CHECK: [[@LINE+1]]:3: error: [system-c++] Calling functions which use default arguments is disallowed
+  // CHECK: [[@LINE+1]]:3: error: [system-c++] Calling functions which use  default arguments is disallowed
   foo();
-// CHECK: note: [system-c++] The default parameter was declared here:
-// CHECK-NEXT: int foo(int value=5) {
+  // CHECK: note: [system-c++] The default parameter was declared here:
+  // CHECK-NEXT: int foo(int value = 5) { return value; }
   foo(0);
   bar(0);
 }
