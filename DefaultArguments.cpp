@@ -27,8 +27,9 @@ namespace clang {
 namespace ast_matchers {
 
 AST_MATCHER(ParmVarDecl, hasDefaultArgument) { return Node.hasDefaultArg(); }
-}
-}
+
+} // namespace ast_matchers
+} // namespace clang
 
 namespace {
 

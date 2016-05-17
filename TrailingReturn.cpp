@@ -31,8 +31,9 @@ AST_MATCHER(FunctionDecl, hasTrailingReturn) {
   const FunctionProtoType *F = cast<FunctionProtoType>(T);
   return F->hasTrailingReturn();
 }
-}
-}
+
+} // namespace ast_matchers
+} // namespace clang
 
 namespace {
 

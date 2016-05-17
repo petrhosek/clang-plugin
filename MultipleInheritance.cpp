@@ -72,9 +72,9 @@ bool isCurrentClassInterface(const CXXRecordDecl *Node) {
 
 bool isInterface(const CXXRecordDecl *Node) {
   // Short circuit the lookup if we have analyzed this record before.
-  bool previousIsInterfaceResult;
-  if (getInterfaceStatus(Node, &previousIsInterfaceResult)) {
-    return previousIsInterfaceResult;
+  bool PreviousIsInterfaceResult;
+  if (getInterfaceStatus(Node, &PreviousIsInterfaceResult)) {
+    return PreviousIsInterfaceResult;
   }
 
   // To be an interface, all base classes must be interfaces as well.
@@ -87,27 +87,28 @@ bool isInterface(const CXXRecordDecl *Node) {
       return false;
     }
   }
-  bool currentClassIsInterface = isCurrentClassInterface(Node);
-  addNodeToInterfaceMap(Node, currentClassIsInterface);
-  return currentClassIsInterface;
+  bool CurrentClassIsInterface = isCurrentClassInterface(Node);
+  addNodeToInterfaceMap(Node, CurrentClassIsInterface);
+  return CurrentClassIsInterface;
 }
 
 AST_MATCHER(CXXRecordDecl, hasMultipleConcreteBaseClasses) {
   if (!Node.hasDefinition())
     return false;
 
-  int numConcrete = 0;
+  int NumConcrete = 0;
   for (const auto &I : Node.bases()) {
     const RecordType *Ty = I.getType()->getAs<RecordType>();
     assert(Ty && "RecordType of base class is unknown");
     CXXRecordDecl *Base = cast<CXXRecordDecl>(Ty->getDecl()->getDefinition());
     if (!isInterface(Base))
-      numConcrete++;
+      NumConcrete++;
   }
-  return numConcrete > 1;
+  return NumConcrete > 1;
 }
-}
-}
+
+} // namespace ast_matchers
+} // namespace clang
 
 namespace {
 

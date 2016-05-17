@@ -71,7 +71,7 @@ public:
     return true;
   }
 };
-}
+} // namespace
 
 static FrontendPluginRegistry::Add<ClangPluginAction>
     X("system-c++", "System C++ dialect of the C++ programming language");

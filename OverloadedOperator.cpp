@@ -35,8 +35,9 @@ AST_MATCHER(CXXMethodDecl, hasOverloadedOperator) {
   }
   return Node.isOverloadedOperator();
 }
-}
-}
+
+} // namespace ast_matchers
+} // namespace clang
 
 namespace {
 

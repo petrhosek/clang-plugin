@@ -29,8 +29,9 @@ namespace ast_matchers {
 AST_MATCHER(CXXRecordDecl, hasVirtualBaseClass) {
   return Node.hasDefinition() && (Node.getNumVBases() != 0);
 }
-}
-}
+
+} // namespace ast_matchers
+} // namespace clang
 
 namespace {
 
